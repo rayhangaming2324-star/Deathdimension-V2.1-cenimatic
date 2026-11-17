@@ -1,3 +1,4 @@
+
 name: Build DeathDimension V2.1
 
 on:
@@ -15,22 +16,27 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Java 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
 
-      - name: Find and Build Plugin
+      - name: Find pom.xml
+        id: find-pom
         run: |
-          POM=$(find . -name pom.xml -not -path './.git/*' | head -n 1)
+          POM=$(find . -type f -name pom.xml -not -path './.git/*' | head -n 1)
 
           if [ -z "$POM" ]; then
             echo "ERROR: pom.xml tidak ditemukan!"
+            echo "Pastikan source plugin sudah di-upload ke repository."
             exit 1
           fi
 
-          echo "Menggunakan: $POM"
-          mvn -B -f "$POM" clean package
+          echo "POM_PATH=$POM" >> "$GITHUB_ENV"
+          echo "Ditemukan: $POM"
+
+      - name: Build plugin
+        run: mvn -B -f "$POM_PATH" clean package
 
       - name: Upload JAR
         uses: actions/upload-artifact@v4
